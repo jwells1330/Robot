@@ -41,7 +41,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 /**
  * Move2Sec - moves the robot for 2 seconds
  *
- * @autor Jochen Fischer
+ * @author Jacob Wells
  */
 
 @Autonomous(name="Move With Encoders", group="Elon")
@@ -68,35 +68,35 @@ public class MoveWithEncoder extends LinearOpMode {
 
         sleep(2000);  // wait to read the display
 
-        moveRobot(0.3, 24.0);
+        followPoly();
 
-        sleep(2000);
+        sleep(1000);
 
         //------------------------------------
         // turn robot
         // start both motors
 
         // reset encoders
-        robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        // Set all motors to run with encoders.
-        robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        robot.motorLeft.setPower(-HardwareDriveBot.SLOW_POWER);
-        robot.motorRight.setPower(HardwareDriveBot.SLOW_POWER);
-
-        int encTarget = 1500;
-
-        // wait until we reach our target position
-        int pos;
-        do {
-            pos = robot.motorRight.getCurrentPosition();
-            telemetry.addData("Encoder", pos);
-            telemetry.update();
-        }
-        while (pos < encTarget);
+//        robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//
+//        // Set all motors to run with encoders.
+//        robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//
+//        robot.motorLeft.setPower(-HardwareDriveBot.SLOW_POWER);
+//        robot.motorRight.setPower(HardwareDriveBot.SLOW_POWER);
+//
+//        int encTarget = 1500;
+//
+//        // wait until we reach our target position
+//        int pos;
+//        do {
+//            pos = robot.motorRight.getCurrentPosition();
+//            telemetry.addData("Encoder", pos);
+//            telemetry.update();
+//        }
+//        while (pos < encTarget);
 
         // stop the robot:
         robot.stop();
@@ -129,11 +129,15 @@ public class MoveWithEncoder extends LinearOpMode {
         double rotations = inches / (Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
         int encTarget = (int) (rotations * HardwareDriveBot.ENC_ROTATION);
 
-        robot.motorLeft.setPower(speed);
-        robot.motorRight.setPower(speed);
-
+        if (inches>0){
+            robot.motorLeft.setPower(-speed);
+            robot.motorRight.setPower(-speed);
+        }else {
+            robot.motorLeft.setPower(speed);
+            robot.motorRight.setPower(speed);
+        }
         // wait until we reach our target position
-        while (robot.motorLeft.getCurrentPosition() < encTarget) {
+        while (Math.abs(robot.motorLeft.getCurrentPosition()) < Math.abs(encTarget)) {
             idle();
         }
 
@@ -154,4 +158,63 @@ public class MoveWithEncoder extends LinearOpMode {
         Log.i("ROBOT", "Encoder" + robot.motorLeft.getCurrentPosition());
     }
 
+    void turnRobot(double speed, double degrees)throws InterruptedException{
+        // reset encoders
+        robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // Set all motors to run with encoders.
+        robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        //
+        double radians = (degrees*Math.PI)/180;
+        double distance = radians*(13.15/2);
+        double rotations = distance / (Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
+        int encTarget = (int) (rotations * HardwareDriveBot.ENC_ROTATION);
+
+        telemetry.addData("encTarget", encTarget);
+        telemetry.update();
+
+
+        if(degrees > 0){
+            robot.motorLeft.setPower(-speed);
+            robot.motorRight.setPower(speed);
+
+            while (Math.abs(robot.motorLeft.getCurrentPosition()) < Math.abs(encTarget)) {
+
+                telemetry.addData("left encoder", robot.motorLeft.getCurrentPosition());
+                telemetry.update();
+
+                idle();
+            }
+        }else {
+            robot.motorLeft.setPower(speed);
+            robot.motorRight.setPower(-speed);
+
+            while (Math.abs(robot.motorRight.getCurrentPosition()) < Math.abs(encTarget)) {
+
+                telemetry.addData("left encoder", robot.motorRight.getCurrentPosition());
+                telemetry.update();
+
+                idle();
+            }
+        }
+
+        robot.stop();
+
+        System.out.println("Encoder" + robot.motorLeft.getCurrentPosition());
+        Log.i("ROBOT", "Encoder" + robot.motorLeft.getCurrentPosition());
+    }
+    public void followPoly() throws InterruptedException{
+        moveRobot(.7, 72);
+        moveRobot(.7, -24);
+        turnRobot(.7, 90);
+        moveRobot(.7, 72);
+        turnRobot(.7, 120);
+        moveRobot(.7, 55.4);
+        turnRobot(.7, 60);
+        moveRobot(.7, 48);
+        turnRobot(.7, -270);
+    }
 }

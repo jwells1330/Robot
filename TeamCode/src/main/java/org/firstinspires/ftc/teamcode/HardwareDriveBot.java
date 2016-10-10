@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -22,6 +25,9 @@ public class HardwareDriveBot
     /* Public OpMode members. */
     public DcMotor  motorLeft   = null;
     public DcMotor  motorRight  = null;
+    public TouchSensor touchSensor = null;
+    public ColorSensor colorSensor = null;
+    public GyroSensor gyroSensor = null;
 
     // useful constants:
     public static final double SLOW_POWER = 0.2;
@@ -61,6 +67,15 @@ public class HardwareDriveBot
         // Set all motors to run with encoders.
         motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        /**
+         * Setup Sensors
+         */
+        touchSensor = hwMap.touchSensor.get("touchSensor");
+        colorSensor = hwMap.colorSensor.get("colorSensor");
+        gyroSensor = hwMap.gyroSensor.get("gyroSensor");
+
+        colorSensor.enableLed(true);
     }
 
     // Stop both motors
