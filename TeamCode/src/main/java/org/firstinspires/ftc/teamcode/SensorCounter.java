@@ -68,35 +68,9 @@ public class SensorCounter extends LinearOpMode {
 
         sleep(2000);  // wait to read the display
 
-        followPoly();
+        moveToWall(.1);
 
         sleep(1000);
-
-        //------------------------------------
-        // turn robot
-        // start both motors
-
-        // reset encoders
-//        robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//
-//        // Set all motors to run with encoders.
-//        robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//
-//        robot.motorLeft.setPower(-HardwareDriveBot.SLOW_POWER);
-//        robot.motorRight.setPower(HardwareDriveBot.SLOW_POWER);
-//
-//        int encTarget = 1500;
-//
-//        // wait until we reach our target position
-//        int pos;
-//        do {
-//            pos = robot.motorRight.getCurrentPosition();
-//            telemetry.addData("Encoder", pos);
-//            telemetry.update();
-//        }
-//        while (pos < encTarget);
 
         // stop the robot:
         robot.stop();
@@ -106,18 +80,8 @@ public class SensorCounter extends LinearOpMode {
 
         sleep(4000);
     }
+    public void moveToWall(double speed){
 
-    /**
-     * moveRobot - drives robot forward by a given distance at a given speed
-     *
-     * @author Jochen Fischer
-     * @version 1.0 - 9/28/2016
-     *
-     * @param speed     speed of robot between -1.0 ... 1.0
-     * @param inches    distance the robot will travel
-     * @throws InterruptedException
-     */
-    void moveRobot (double speed, double inches) throws InterruptedException {
         // reset encoders
         robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -126,95 +90,41 @@ public class SensorCounter extends LinearOpMode {
         robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double rotations = inches / (Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
+        double rotations = 12 / (Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
         int encTarget = (int) (rotations * HardwareDriveBot.ENC_ROTATION);
+        int count = 0;
+        double alpha = 0;
 
-        if (inches>0){
-            robot.motorLeft.setPower(-speed);
-            robot.motorRight.setPower(-speed);
-        }else {
+        while(robot.motorLeft.getCurrentPosition()<encTarget){
+            count++;
+            alpha += robot.colorSensor.alpha();
+        }
+        double alphaAverage = alpha/count;
+        System.out.println(alphaAverage);
+        boolean onWhiteLine = false;
+        int whiteLines = 0;
+
+        while(!robot.touchSensor.isPressed()){
+
+            if(robot.colorSensor.alpha()>alphaAverage+.25 && !onWhiteLine){
+                whiteLines++;
+                onWhiteLine = true;
+                telemetry.add("White Lines", whiteLines);
+                telemetry.update();
+            }else if(robot.colorSensor.alpha()<alphaAverage-.25 && onWhiteLine){
+                onWhiteLine = false;
+            }
             robot.motorLeft.setPower(speed);
             robot.motorRight.setPower(speed);
         }
-        // wait until we reach our target position
-        while (Math.abs(robot.motorLeft.getCurrentPosition()) < Math.abs(encTarget)) {
-            idle();
-        }
 
-        /*---- alternate version, as reference -------
-        int pos;
-        do {
-            pos = robot.motorLeft.getCurrentPosition();
-            telemetry.addData("Encoder", pos);
-            telemetry.update();
-        }
-        while (pos < encTarget);
-        --------------------------------------------*/
+        double distanceTraveled = robot.motorLeft.getCurrentPosition();
+        rotations = (int) (distanceTraveled * HardwareDriveBot.ENC_ROTATION);
+        double inches = rotations*(Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
 
-        // stop the robot:
-        robot.stop();
-
-        System.out.println("Encoder" + robot.motorLeft.getCurrentPosition());
-        Log.i("ROBOT", "Encoder" + robot.motorLeft.getCurrentPosition());
-    }
-
-    void turnRobot(double speed, double degrees)throws InterruptedException{
-        // reset encoders
-        robot.motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        // Set all motors to run with encoders.
-        robot.motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        //
-        double radians = (degrees*Math.PI)/180;
-        double distance = radians*(13.15/2);
-        double rotations = distance / (Math.PI * HardwareDriveBot.WHEEL_DIAMETER);
-        int encTarget = (int) (rotations * HardwareDriveBot.ENC_ROTATION);
-
-        telemetry.addData("encTarget", encTarget);
-        telemetry.update();
-
-
-        if(degrees > 0){
+        while(robot.motorLeft.getCurrentPosition()>-encTarget){
             robot.motorLeft.setPower(-speed);
-            robot.motorRight.setPower(speed);
-
-            while (Math.abs(robot.motorLeft.getCurrentPosition()) < Math.abs(encTarget)) {
-
-                telemetry.addData("left encoder", robot.motorLeft.getCurrentPosition());
-                telemetry.update();
-
-                idle();
-            }
-        }else {
-            robot.motorLeft.setPower(speed);
             robot.motorRight.setPower(-speed);
-
-            while (Math.abs(robot.motorRight.getCurrentPosition()) < Math.abs(encTarget)) {
-
-                telemetry.addData("left encoder", robot.motorRight.getCurrentPosition());
-                telemetry.update();
-
-                idle();
-            }
         }
-
-        robot.stop();
-
-        System.out.println("Encoder" + robot.motorLeft.getCurrentPosition());
-        Log.i("ROBOT", "Encoder" + robot.motorLeft.getCurrentPosition());
-    }
-    public void followPoly() throws InterruptedException{
-        moveRobot(.7, 72);
-        moveRobot(.7, -24);
-        turnRobot(.7, 90);
-        moveRobot(.7, 72);
-        turnRobot(.7, 120);
-        moveRobot(.7, 55.4);
-        turnRobot(.7, 60);
-        moveRobot(.7, 48);
-        turnRobot(.7, -270);
     }
 }

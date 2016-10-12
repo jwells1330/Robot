@@ -74,9 +74,8 @@ public class SensorLoop extends LinearOpMode {
             telemetry.addData("color", String.format("R:%3d G:%3d B:%3d A:%3d"), red, green, blue, alpha));
             telemetry.update();
 
-                    idle();
+            idle();
         }
-
         sleep(4000);
     }
 }
